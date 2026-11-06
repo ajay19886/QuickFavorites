@@ -1,122 +1,139 @@
+<p align="center">
+  <img src="docs/banner.png" alt="QuickFavorites - your favorite shortcuts, one click away (illustration)" width="100%">
+</p>
+
+<p align="center">
+  <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green.svg">
+  <img alt="Windows 10 | 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
+  <img alt="PowerShell 5.1" src="https://img.shields.io/badge/PowerShell-5.1-5391FE">
+  <img alt="No admin rights" src="https://img.shields.io/badge/admin%20rights-not%20required-brightgreen">
+</p>
+
 # QuickFavorites
 
-A lightweight, no-install floating desktop launcher for Windows, built with Windows PowerShell and Windows Forms.
+**Bring your favorite shortcuts back to Windows 11 - one click, no admin rights, no installer.**
 
-QuickFavorites displays a small **Desktop »** button on your desktop. Clicking it opens a cascading menu based on the contents of your personal `QuickFavorites\Menu` folder.
+Windows 11 removed the classic taskbar toolbars. QuickFavorites puts a small, draggable **Desktop »** button on your screen. Click it and a cascading menu of your favorite folders, files, apps and shortcuts opens - built from one ordinary folder you control.
 
-It is designed to run under your current Windows user account. It does not require an installer, administrator rights, or UAC elevation.
+It is a single, readable PowerShell script. Download it, run it, done.
+
+## Why you might like it
+
+- **No administrator rights.** Runs in your normal user session. It never asks for UAC elevation.
+- **No installer, no background service.** One `.ps1` file. Exit it from its right-click menu and it is gone.
+- **Floating and draggable.** Put it wherever you like, lock it in place, and it remembers the position.
+- **Your folder is the menu.** Drop a shortcut in, and it appears. Sub-folders become cascading menus, with real Windows icons.
+- **Readable and auditable.** No compiled binary - you can read every line before you run it.
+- **Considerate.** Hides itself during full-screen apps and presentations, stays on-screen after monitor or scaling changes, and never starts twice.
+
+## Screenshots
+
+> The images below are **illustrations** of the interface. Real screenshots are welcome - see [Contributing](#contributing).
+
+<p align="center">
+  <img src="docs/screenshots/menu.png" alt="Cascading favorites menu opening above the floating Desktop button (illustration)" width="85%">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/options.png" alt="Right-click options: open folder, lock position, reset position, start with Windows, exit (illustration)" width="60%">
+</p>
+
+## Quick start
+
+1. Download [`FavoritesMenu.ps1`](FavoritesMenu.ps1) and save it to `%USERPROFILE%\QuickFavorites\`.
+2. Right-click the file, choose **Properties**, and tick **Unblock** if you see it. Click OK.
+3. Press **Win + R**, paste this, and press Enter (or run it from Command Prompt):
+
+   ```
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -STA -File "%USERPROFILE%\QuickFavorites\FavoritesMenu.ps1"
+   ```
+
+4. Right-click the **Desktop »** button, choose **Open favorites folder**, and drop in your shortcuts.
+5. Optional: right-click the button and tick **Start with Windows**.
+
+The script starts itself in a separate hidden process, so you can close the window you launched it from and the bar keeps running. To run it in the current console instead (to see warnings while troubleshooting), add `-Detached` to the command.
+
+`-ExecutionPolicy Bypass` applies to that one PowerShell process only. It does not change your machine's policy and does not grant admin rights.
+
+> **Managed work PC?** Group Policy, AppLocker or similar rules may still block scripts, even without admin rights. Follow your organization's IT policy.
 
 ## Features
 
-- Floating, always-on-top desktop launcher.
-- Cascading folder menus with lazy loading of subfolders.
-- Opens files, applications, and Windows shortcuts from the menu.
-- Draggable launcher with saved position.
-- Option to lock the launcher position and reset it.
-- Optional start-with-Windows setting for the current user.
-- Dark menu styling and Windows Shell icons.
-- Single-instance protection.
-- Hides hidden and system items from the menu.
-- Displays a clear menu entry when a folder cannot be accessed.
+| Feature | Details |
+| --- | --- |
+| Folder-driven menu | Shortcuts, files, apps and folders from `%USERPROFILE%\QuickFavorites\Menu` |
+| Windows icons | The same icons Explorer shows, cached for speed |
+| Lazy sub-menus | Sub-folders load when opened, so big or looping folder trees stay fast |
+| Draggable and lockable | Drag threshold prevents accidental moves; position saved per user |
+| Multi-monitor and DPI aware | Stays on a visible screen after docking, undocking or scaling changes |
+| Right-click options | Open folder, Lock position, Reset position, Start with Windows, Exit |
+| Full-screen friendly | Hides during full-screen apps and presentations (best-effort detection) |
+| Single instance | Starting it twice does not stack two bars |
+| Dark theme | Dropdowns match the bar |
+| Visible errors | A folder that cannot be opened shows a greyed "(can't open this folder)" item |
+| Startup check | Detects an existing Startup-folder shortcut so it never launches twice |
 
-## Requirements
+## How it compares
 
-- Windows 10 or Windows 11.
-- Windows PowerShell 5.1.
-- .NET Framework components included with supported Windows installations.
-- No third-party PowerShell modules are required.
+Several free projects solve the same Windows 11 gap in different ways. Pick whichever fits your workflow.
 
-PowerShell 7 compatibility has not been tested.
+| Project | Approach |
+| --- | --- |
+| **QuickFavorites** (this project) | A floating, always-on-top button on the desktop; one readable PowerShell script |
+| [TrayToolbar](https://github.com/brondavies/TrayToolbar) | Tray-icon menu built from a folder of shortcuts |
+| [TaskFolder](https://github.com/rod-trent/TaskFolder) | System-tray launcher menu |
+| [WinPinMenu](https://github.com/hatelamers/winpinmenu) | Pins a folder as a popup menu from the taskbar |
+| [ExplorerPatcher](https://github.com/valinet/ExplorerPatcher) | Restores the Windows 10 taskbar, including its toolbars |
 
-## Installation
+QuickFavorites' angle: you can *see* it on your desktop, move it where you want, and read the whole source in one file. Check each project's own page for its requirements.
 
-1. Download `FavoritesMenu.ps1` from this repository, or download the repository ZIP using **Code → Download ZIP**.
-2. Create this folder if it does not already exist:
+## Using it
 
-   ```text
-   %USERPROFILE%\QuickFavorites
-   ```
+- **Left-click** the button to open your favorites.
+- **Drag** the button to move it. Use **Lock position** to stop accidental moves.
+- **Right-click** the button for options.
+- Organize favorites with sub-folders. Folders sort first, with natural number order (2 before 10).
+- Hidden and system files such as `desktop.ini` are not shown.
 
-3. Place `FavoritesMenu.ps1` in that folder.
-4. Create the menu folder:
+## Where things are stored
 
-   ```text
-   %USERPROFILE%\QuickFavorites\Menu
-   ```
+| What | Location |
+| --- | --- |
+| Your shortcuts | `%USERPROFILE%\QuickFavorites\Menu` |
+| Settings (position, lock) | `%USERPROFILE%\QuickFavorites\settings.json` |
+| Optional autostart | `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, value `QuickFavoritesBar` |
 
-5. Add folders, files, and Windows shortcuts (`.lnk`) to the `Menu` folder.
-6. Run the script using Windows PowerShell 5.1:
-
-   ```powershell
-   powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -STA -File "$env:USERPROFILE\QuickFavorites\FavoritesMenu.ps1"
-   ```
-
-The script creates the menu folder if it does not already exist.
-
-## Using QuickFavorites
-
-- **Left-click** the floating Desktop button to open the favorites menu.
-- **Drag** the button to reposition it.
-- **Right-click** the button to access launcher options, including opening the menu folder, locking or resetting the position, configuring startup, and exiting.
-
-The menu reflects the contents of the `Menu` folder. Organize items into subfolders to create cascading menus. Subfolders are populated when opened.
-
-## Configuration and data
-
-QuickFavorites stores its user data outside the source repository:
-
-| Path | Purpose |
-|---|---|
-| `%USERPROFILE%\QuickFavorites\Menu` | Files, shortcuts, and folders displayed in the menu |
-| `%USERPROFILE%\QuickFavorites\settings.json` | Saved launcher position and lock setting |
-
-The application is **no-install**, but it is not a fully portable USB application: its menu and settings are stored under the current Windows user's profile, not beside the script.
-
-Do not commit personal shortcuts, documents, or the local settings file to this repository.
-
-## Start with Windows
-
-QuickFavorites provides a **Start with Windows** option in the right-click menu. This configures startup for the current Windows user only; it does not require administrator rights.
-
-If you already launch the script using a shortcut in your Windows Startup folder, the application detects that shortcut to avoid creating a second automatic launch entry.
-
-## Security and execution notes
-
-- **Unsigned script:** `FavoritesMenu.ps1` is not digitally signed. Windows SmartScreen, antivirus software, or organisational security policies may warn about or block an unsigned PowerShell script. Review the script before running it and follow your organisation's security requirements.
-- **Downloaded-file blocking:** Windows may mark downloaded files as coming from the internet. If Windows displays a security warning, inspect the file first. The file's **Properties** dialog may offer an **Unblock** option; use it only if you trust the source and your organisation permits it.
-- **In-memory C# helper compilation:** The script uses PowerShell `Add-Type` to compile small C# helper classes in memory. These helpers support native Windows functions such as shell icons, window visibility, and topmost behaviour. Some security tools may scrutinise scripts that compile code at runtime.
-- **Execution policy:** The example launch command uses `-ExecutionPolicy Bypass` for that PowerShell process. It does not change the machine-wide execution policy, but organisational security controls may still prevent execution.
-
-## Compatibility and known limitations
-
-- **Windows only:** QuickFavorites uses Windows Forms and Windows Shell APIs. It is not intended for macOS or Linux.
-- **PowerShell version:** Developed for Windows PowerShell 5.1. PowerShell 7 compatibility has not been tested.
-- **Full-screen behaviour:** Hiding the launcher over full-screen applications is best-effort. Behaviour may vary with the application and its display mode; it is not guaranteed for every game or full-screen program.
-- **Display scaling:** DPI awareness is system-level. Per-monitor DPI V2 awareness is not implemented.
-- **Multiple monitors:** The launcher can be used on multi-monitor desktops, but monitor topology changes have not been fully validated. Disconnecting or reconnecting an external display may affect the launcher's position or visibility; manual repositioning or restarting the launcher may be necessary.
-- **Display settings:** Different scaling settings, resolutions, taskbar positions, and monitor arrangements may affect placement.
+The script makes **no network connections**. Please do not commit your own shortcuts or `settings.json` to this repository.
 
 ## Uninstall
 
-1. Exit QuickFavorites using its right-click menu.
-2. If enabled, disable **Start with Windows** from the right-click menu.
-3. Remove any separate QuickFavorites shortcut you created in the Windows Startup folder.
-4. Optionally delete `%USERPROFILE%\QuickFavorites` after backing up any personal files stored in its `Menu` folder.
+1. Right-click the button, untick **Start with Windows** if it is ticked, then choose **Exit**.
+2. Delete the script and, if you wish, the `%USERPROFILE%\QuickFavorites` folder.
+
+## Known limitations
+
+- **Unsigned script.** Windows SmartScreen or antivirus tools may warn about it. Read the code, and use the Unblock step above.
+- **Compiled helper code.** At start-up the script compiles a small piece of C# in memory (`Add-Type`) for icons, DPI and window handling. Some security products flag this on any script.
+- **Full-screen detection is best-effort.** It uses the Windows `SHQueryUserNotificationState` API, which does not recognise every borderless full-screen window.
+- **DPI:** system-level awareness only, not per-monitor. Moving the bar between monitors with different scaling may look slightly blurry.
+- **Folder icons** are the standard Windows folder icon; custom per-folder icons are not shown.
+- Built for **Windows PowerShell 5.1**. PowerShell 7 has not been tested.
+- Early release: tested by the author on Windows 11. Reports from other setups are very welcome.
+
+## Ideas (not promises)
+
+Keyboard shortcut to open the menu, configurable favorites folder and bar size, per-monitor DPI, shortcut search. Open an issue if one of these matters to you.
 
 ## Contributing
 
-Bug reports, suggestions, and pull requests are welcome. Please include:
+Bug reports, ideas and pull requests are welcome. When reporting a display problem, please include your Windows version, scaling and monitor setup.
 
-- Windows version and build.
-- Windows PowerShell version.
-- Display scaling and monitor arrangement, if relevant.
-- Steps to reproduce the issue.
-- Any relevant error message.
+**Real screenshots wanted:** if you run it, a screenshot (using demo shortcuts, no private folder names) is a great contribution.
+
+## Credits
+
+Created by [@ajay19886](https://github.com/ajay19886), developed with the assistance of Claude (Anthropic).
 
 ## License
 
-QuickFavorites is released under the MIT License. See [LICENSE](LICENSE).
-
-## Author
-
-Created by [@ajay19886](https://github.com/ajay19886).
+[MIT](LICENSE) - free to use, change and share.
