@@ -10,6 +10,19 @@
     Right-click the bar for: Open folder, Lock position, Reset position, Start with Windows, Exit.
 #>
 
+param([switch]$Detached)
+
+# Relaunch in its own hidden process, so closing the console it was started from does not
+# close the bar. Use -Detached to run in the current console instead (handy for debugging:
+# warnings and errors then stay visible).
+if (-not $Detached -and $PSCommandPath) {
+    try {
+        $relaunch = '-NoProfile -ExecutionPolicy Bypass -STA -File "{0}" -Detached' -f $PSCommandPath
+        Start-Process -FilePath 'powershell.exe' -ArgumentList $relaunch -WindowStyle Hidden -ErrorAction Stop
+        return
+    } catch { }   # if the relaunch fails, simply continue in this process
+}
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
@@ -438,7 +451,7 @@ $miStartup.Add_Click({
     param($sender, $e)
     try {
         if ($sender.Checked) {
-            $cmd = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -STA -File "{0}"' -f $scriptPath
+            $cmd = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -STA -File "{0}" -Detached' -f $scriptPath
             Set-ItemProperty -Path $runKey -Name $runName -Value $cmd -ErrorAction Stop
         } else {
             Remove-ItemProperty -Path $runKey -Name $runName -ErrorAction SilentlyContinue
