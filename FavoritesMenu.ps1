@@ -6,7 +6,7 @@
 .NOTES
     Shortcuts folder : %USERPROFILE%\QuickFavorites\Menu   (created if missing)
     Settings file    : %USERPROFILE%\QuickFavorites\settings.json
-    Run manually     : powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -STA -File FavoritesMenu.ps1
+    Run manually     : double-click Start-QuickFavorites.bat (or use Install.bat for a one-click setup)
     Right-click the bar for: Open folder, Lock position, Reset position, Start with Windows, Exit.
 #>
 
@@ -18,7 +18,13 @@ param([switch]$Detached)
 if (-not $Detached -and $PSCommandPath) {
     try {
         $relaunch = '-NoProfile -ExecutionPolicy Bypass -STA -File "{0}" -Detached' -f $PSCommandPath
-        Start-Process -FilePath 'powershell.exe' -ArgumentList $relaunch -WindowStyle Hidden -ErrorAction Stop
+        if ([Environment]::OSVersion.Version.Build -ge 22000) {
+            # Windows 11: run through a headless console host. There is no window at all - no Windows
+            # Terminal tab and no taskbar icon - so it cannot be closed by accident.
+            Start-Process -FilePath 'conhost.exe' -ArgumentList "--headless powershell.exe $relaunch" -ErrorAction Stop
+        } else {
+            Start-Process -FilePath 'powershell.exe' -ArgumentList $relaunch -WindowStyle Hidden -ErrorAction Stop
+        }
         return
     } catch { }   # if the relaunch fails, simply continue in this process
 }
@@ -106,6 +112,15 @@ $runKey       = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 $runName      = 'QuickFavoritesBar'
 $skipAttr     = [System.IO.FileAttributes]'Hidden,System'   # hides desktop.ini, Thumbs.db etc.
 
+# Command line used to start the bar at sign-in. On Windows 11 it goes through a headless console
+# host, so no Windows Terminal tab or taskbar icon appears; older Windows uses a hidden window.
+function Get-StartupCommand {
+    if ([Environment]::OSVersion.Version.Build -ge 22000) {
+        return ('conhost.exe --headless powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File "{0}" -Detached' -f $scriptPath)
+    }
+    return ('powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -STA -File "{0}" -Detached' -f $scriptPath)
+}
+
 $null = New-Item -ItemType Directory -Path $root -Force -ErrorAction SilentlyContinue
 
 $script:settings = @{ Left = $null; Top = $null; Locked = $false }
@@ -186,8 +201,31 @@ public class QfColors : ProfessionalColorTable {
     public override Color CheckSelectedBackground { get { return Sel; } }
     public override Color CheckPressedBackground { get { return Sel; } }
 }
+
+// Draws a clearly visible white tick (the default tick is dark and disappears on a dark menu)
+public class QfRenderer : ToolStripProfessionalRenderer {
+    public QfRenderer(ProfessionalColorTable table) : base(table) { }
+    // White sub-menu arrows (the default arrow is dark and hard to see on the dark menu)
+    protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e) {
+        e.ArrowColor = Color.White;
+        base.OnRenderArrow(e);
+    }
+    protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e) {
+        Rectangle r = e.ImageRectangle;
+        Graphics g = e.Graphics;
+        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        using (SolidBrush b = new SolidBrush(Color.FromArgb(70, 95, 118)))
+            g.FillRectangle(b, r);
+        using (Pen p = new Pen(Color.White, 2f)) {
+            g.DrawLines(p, new Point[] {
+                new Point(r.Left + 4, r.Top + r.Height / 2),
+                new Point(r.Left + r.Width / 2 - 1, r.Bottom - 5),
+                new Point(r.Right - 4, r.Top + 4) });
+        }
+    }
+}
 '@
-    $darkRenderer = New-Object System.Windows.Forms.ToolStripProfessionalRenderer -ArgumentList (New-Object QfColors)
+    $darkRenderer = New-Object QfRenderer -ArgumentList (New-Object QfColors)
     $darkRenderer.RoundedEdges = $false
     $menu.Renderer = $darkRenderer
 } catch {
@@ -467,13 +505,22 @@ if ($startupLnk) {
     $miStartup.ToolTipText = $startupLnk
 } else {
     $miStartup.CheckOnClick = $true
+    # Upgrade an existing entry that points at THIS script to the current command line
+    # (an entry pointing at a different copy is left alone)
+    try {
+        $cur = (Get-ItemProperty -Path $runKey -Name $runName -ErrorAction SilentlyContinue).$runName
+        $new = Get-StartupCommand
+        if ($cur -and $scriptPath -and ($cur.IndexOf($scriptPath, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) -and ($cur -ne $new)) {
+            Set-ItemProperty -Path $runKey -Name $runName -Value $new -ErrorAction Stop
+        }
+    } catch { }
     $miStartup.Checked = [bool](Get-ItemProperty -Path $runKey -Name $runName -ErrorAction SilentlyContinue)
 }
 $miStartup.Add_Click({
     param($sender, $e)
     try {
         if ($sender.Checked) {
-            $cmd = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -STA -File "{0}" -Detached' -f $scriptPath
+            $cmd = Get-StartupCommand
             Set-ItemProperty -Path $runKey -Name $runName -Value $cmd -ErrorAction Stop
         } else {
             Remove-ItemProperty -Path $runKey -Name $runName -ErrorAction SilentlyContinue
