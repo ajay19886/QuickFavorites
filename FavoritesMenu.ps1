@@ -247,6 +247,13 @@ function Start-Favorite {
     }
 }
 
+# Opens a folder from the menu in Explorer (instead of drilling down into it) and closes the menu
+function Open-FavoriteFolder {
+    param([string]$Path)
+    try { $menu.Close() } catch { }
+    Start-Favorite -Path $Path
+}
+
 $natural = { [regex]::Replace($_.Name, '\d+', { param($m) $m.Value.PadLeft(12, '0') }) }
 
 # Adds one level only. Sub-folders are filled when they are opened (lazy), so a
@@ -281,6 +288,21 @@ function Add-Entries {
         if ($entry.PSIsContainer) {
             $item.Text = $entry.Name -replace '&', '&&'            # '&' would otherwise become a hotkey underline
             $item.Tag  = $entry.FullName
+            $item.ToolTipText = "$($entry.FullName)`n(Double-click or right-click to open this folder)"
+
+            # Hover/click still drills down; double-click or right-click opens the folder itself
+            $item.DoubleClickEnabled = $true
+            $item.Add_DoubleClick({
+                param($sender, $e)
+                Open-FavoriteFolder -Path ([string]$sender.Tag)
+            })
+            $item.Add_MouseUp({
+                param($sender, $e)
+                if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Right) {
+                    Open-FavoriteFolder -Path ([string]$sender.Tag)
+                }
+            })
+
             [void]$item.DropDownItems.Add((New-Object System.Windows.Forms.ToolStripMenuItem('...')))   # placeholder so the arrow shows
             $item.Add_DropDownOpening({
                 param($sender, $e)
