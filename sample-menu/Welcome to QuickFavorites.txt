@@ -1,0 +1,12 @@
+Welcome to QuickFavorites!
+
+This folder IS your favorites menu. Everything in it appears when you click the "Desktop >>" button.
+
+  * Add a shortcut, file or folder here and it shows up in the menu straight away.
+  * Sub-folders become cascading menus.
+  * Hover a folder to drill down, or double-click / right-click it to open it in Explorer.
+  * Right-click the "Desktop >>" button to lock or reset its position, open this folder, or exit.
+
+Everything in here is just sample content. Delete it and add your own favorites.
+
+Project page: https://github.com/ajay19886/QuickFavorites

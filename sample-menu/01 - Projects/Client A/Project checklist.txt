@@ -1,0 +1,7 @@
+Project checklist (sample)
+
+[x] Kick-off meeting
+[x] Collect requirements
+[ ] First draft
+[ ] Review
+[ ] Delivery
